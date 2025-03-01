@@ -5,12 +5,23 @@ import 'package:sharedtask/pref/sherd.dart';
 import 'package:sharedtask/routes/welcome.dart';
 import 'package:sharedtask/screenroutes/screenroutes.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   Login({super.key});
 
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+/* TODO:
+* Incorrect Handling of IDs: You don’t persist or retrieve the last userId.
+* Each time you log in, userId starts from 0.*/
   String userId = "${0}";
+
   final _firstNameController = TextEditingController();
+
   final _secondNameController = TextEditingController();
+
   final _emailController = TextEditingController();
 
   void _saveUserData() {
@@ -37,6 +48,32 @@ class Login extends StatelessWidget {
     _firstNameController.clear();
     _secondNameController.clear();
     _emailController.clear();
+  }
+
+  Preferences pref = Preferences();
+
+  void setUserdata() async {
+    String firstName = _firstNameController.text.trim();
+    String secondName = _secondNameController.text.trim();
+    String email = _emailController.text.trim();
+    if (_firstNameController.text.isEmpty ||
+        _secondNameController.text.isEmpty ||
+        _emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Please fill all the fields")));
+      return;
+    }
+    int newId = await pref.setLastId();
+    NewUserData user = NewUserData(
+      userId: newId,
+      firstName: firstName,
+      secondName: secondName,
+      email: email,
+    );
+    await pref.setUserData(user);
+    await pref.setLogin();
+    Navigator.pushNamedAndRemoveUntil(
+        context, ScreenRoutes.welcome, (route) => false);
   }
 
   @override
@@ -75,17 +112,21 @@ class Login extends StatelessWidget {
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () async {
-                  _saveUserData();
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  prefs.setBool("isLogin", true);
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    ScreenRoutes.welcome,
-                    (route) => false,
-                  );
+                onPressed: () {
+                  setUserdata();
+
                 },
+                // onPressed: () async {
+                //   _saveUserData();
+                //   SharedPreferences prefs =
+                //       await SharedPreferences.getInstance();
+                //   prefs.setBool("isLogin", true);
+                //   Navigator.pushNamedAndRemoveUntil(
+                //     context,
+                //     ScreenRoutes.welcome,
+                //     (route) => false,
+                //   );
+                // },
                 child: Text("Login"),
               ),
             ],
